@@ -227,6 +227,9 @@ def insert_podcast(dir_dict):
             for x in result.get("podcasters")
         ]
         properties = utils.get_properties(podcast, movie_properties_type_dict)
+        properties = notion_helper.sanitize_properties(
+            notion_helper.podcast_database_id, properties
+        )
         parent = {
             "database_id": notion_helper.podcast_database_id,
             "type": "database_id",
@@ -353,12 +356,18 @@ def insert_episode(episodes, d,dir_dict):
             )
         ]
         properties = utils.get_properties(episode, book_properties_type_dict)
+        properties = notion_helper.sanitize_properties(
+            notion_helper.episode_database_id, properties
+        )
         notion_helper.get_all_relation(properties=properties)
         if episode.get("日期"):
             notion_helper.get_date_relation(
                 properties=properties,
                 date=pendulum.from_timestamp(episode.get("日期"), tz="Asia/Shanghai"),
             )
+        properties = notion_helper.sanitize_properties(
+            notion_helper.episode_database_id, properties
+        )
         parent = {
             "database_id": notion_helper.episode_database_id,
             "type": "database_id",

@@ -38,6 +38,7 @@ class NotionHelper:
     database_id_dict = {}
     heatmap_block_id = None
     property_dict = {}
+    database_property_names = {}
 
     def __init__(self):
         self.client = Client(auth=os.getenv("NOTION_TOKEN").strip(), log_level=logging.ERROR)
@@ -109,6 +110,18 @@ class NotionHelper:
                     print(f"跳过数据库字段更新（schema 已达上限）：{id}")
                     return
                 raise
+    @retry(stop_max_attempt_number=3, wait_fixed=5000)
+    def sanitize_properties(self, database_id, properties):
+        """
+        Remove unknown properties based on the current Notion database schema.
+        This prevents 400 errors when legacy databases are missing optional fields.
+        """
+        if database_id not in self.database_property_names:
+            response = self.client.databases.retrieve(database_id=database_id)
+            schema = response.get("properties", {})
+            self.database_property_names[database_id] = set(schema.keys())
+        valid = self.database_property_names.get(database_id, set())
+        return {k: v for k, v in properties.items() if k in valid}
     def get_relation_database_id(self, property):
         return property.get("relation").get("database_id")
 
