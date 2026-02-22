@@ -1,7 +1,7 @@
 import argparse
 import os
-from utils import get_embed
-from notion_helper import NotionHelper
+from podcast2notion.utils import get_embed
+from podcast2notion.notion_helper import NotionHelper
 def get_file():
     # 设置文件夹路径
     folder_path = './OUT_FOLDER'
