@@ -41,7 +41,7 @@ jobs:
           pip install -r requirements.txt
       - name: podcast sync
         run: |
-          podcast
+          python -m podcast2notion.podcast
       - name: Set default year if not provided
         run: echo "YEAR=$(date +"%Y")" >> $GITHUB_ENV
         if: env.YEAR == ''
@@ -65,4 +65,4 @@ jobs:
           git push || echo "nothing to push"
       - name: udpate heatmap 
         run: |
-            update_heatmap
+            python -m podcast2notion.update_heatmap

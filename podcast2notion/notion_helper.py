@@ -4,6 +4,7 @@ import re
 import time
 
 from notion_client import Client
+from notion_client.errors import APIResponseError
 from retrying import retry
 from datetime import timedelta
 from dotenv import load_dotenv
@@ -98,7 +99,16 @@ class NotionHelper:
         ):
             update_properties["通义链接"] = {"url": {}}
         if len(update_properties) > 0:
-            self.client.databases.update(database_id=id, properties=update_properties)
+            try:
+                self.client.databases.update(database_id=id, properties=update_properties)
+            except APIResponseError as e:
+                # Some user databases are already at Notion schema limits.
+                # Do not fail the whole sync because this compatibility field
+                # is optional for existing databases.
+                if "maximum size" in str(e).lower() or "schema" in str(e).lower():
+                    print(f"跳过数据库字段更新（schema 已达上限）：{id}")
+                    return
+                raise
     def get_relation_database_id(self, property):
         return property.get("relation").get("database_id")
 
