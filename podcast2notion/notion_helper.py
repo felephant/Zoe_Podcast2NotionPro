@@ -270,17 +270,19 @@ class NotionHelper:
     def get_all_podcast(self):
         results = self.query_all(self.podcast_database_id)
         podcast_dict = {}
+        def _safe_value(properties, name):
+            p = properties.get(name)
+            if p is None:
+                return None
+            return utils.get_property_value(p)
         for result in results:
-            pid = utils.get_property_value(result.get("properties").get("Pid"))
+            properties = result.get("properties", {})
+            pid = _safe_value(properties, "Pid")
             podcast_dict[pid] = {
                 "page_id": result.get("id"),
-                "最后更新时间": utils.get_property_value(
-                    result.get("properties").get("最后更新时间")
-                ),
-                "收听时长": utils.get_property_value(
-                    result.get("properties").get("收听时长")
-                ),
-                "通义链接": utils.get_property_value(result.get("properties").get("通义链接"))
+                "最后更新时间": _safe_value(properties, "最后更新时间"),
+                "收听时长": _safe_value(properties, "收听时长"),
+                "通义链接": _safe_value(properties, "通义链接"),
                 
             }
         return podcast_dict
@@ -289,28 +291,22 @@ class NotionHelper:
     def get_all_episode(self):
         results = self.query_all(self.episode_database_id)
         episode_dict = {}
+        def _safe_value(properties, name):
+            p = properties.get(name)
+            if p is None:
+                return None
+            return utils.get_property_value(p)
         for result in results:
-            eid = utils.get_property_value(result.get("properties").get("Eid"))
+            properties = result.get("properties", {})
+            eid = _safe_value(properties, "Eid")
             episode_dict[eid] = {
                 "page_id": result.get("id"),
-                "状态": utils.get_property_value(
-                    result.get("properties").get("状态")
-                ),
-                "喜欢": utils.get_property_value(
-                    result.get("properties").get("喜欢")
-                ),          
-                "收听进度": utils.get_property_value(
-                    result.get("properties").get("收听进度")
-                ),          
-                "语音转文字状态": utils.get_property_value(
-                    result.get("properties").get("语音转文字状态")
-                ),
-                "通义链接": utils.get_property_value(
-                    result.get("properties").get("通义链接")
-                ),
-                "日期": utils.get_property_value(
-                    result.get("properties").get("日期")
-                )
+                "状态": _safe_value(properties, "状态"),
+                "喜欢": _safe_value(properties, "喜欢"),
+                "收听进度": _safe_value(properties, "收听进度"),
+                "语音转文字状态": _safe_value(properties, "语音转文字状态"),
+                "通义链接": _safe_value(properties, "通义链接"),
+                "日期": _safe_value(properties, "日期"),
             }
         return episode_dict
 
