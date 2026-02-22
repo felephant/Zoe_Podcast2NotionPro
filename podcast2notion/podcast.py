@@ -332,7 +332,7 @@ def insert_episode(episodes, d,dir_dict):
                 episode["日期"] = old_episode.get("日期")
             # 如果语音转文字状态不为Done，并且通义链接为空，则提交转写
             if old_episode.get("语音转文字状态")!= "Done" and old_episode.get("通义链接") is None:
-                episode["通义链接"] = getTongYiUrl(dir_name,episode.get("标题"),episode.get("音频"))
+                episode["通义链接"] = getTongYiUrl(dir_dict,dir_name,episode.get("标题"),episode.get("音频"))
             # 如果通义链接不为空，则赋值
             elif old_episode.get("通义链接") is not None:
                 episode["通义链接"] = old_episode.get("通义链接")
