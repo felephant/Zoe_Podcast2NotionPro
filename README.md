@@ -1,3 +1,32 @@
+## Obsidian 同步（新增）
+
+可以在同步 Notion 的同时，自动把每条 Episode 生成 Markdown 到你的 Obsidian 目录。
+
+在 `.env` 增加：
+
+```env
+OBSIDIAN_SYNC_ENABLED=true
+OBSIDIAN_EXPORT_DIR=/你的/Obsidian/Vault/Podcast
+```
+
+如果你希望再自动上传到 Google Drive（例如 Obsidian Vault 在 Drive 中）：
+
+```env
+GOOGLE_DRIVE_FOLDER_ID=你的Drive文件夹ID
+GOOGLE_OAUTH_TOKEN_URL=https://oauth2.googleapis.com/token
+GOOGLE_OAUTH_CLIENT_ID=你的client_id
+GOOGLE_OAUTH_CLIENT_SECRET=你的client_secret
+GOOGLE_OAUTH_REFRESH_TOKEN=你的refresh_token
+# 可选：GOOGLE_OAUTH_SCOPE=https://www.googleapis.com/auth/drive.file
+```
+
+- 现在支持自动刷新 Access Token，优先使用 `refresh_token` 流程
+- 程序会在运行时更新本地 `.env` 里的 `GOOGLE_DRIVE_ACCESS_TOKEN`，用于后续运行复用
+- `GOOGLE_DRIVE_FOLDER_ID` 是目标文件夹 ID（URL 中 `folders/<ID>` 的部分）
+
+同步结果：
+- 本地文件：`$OBSIDIAN_EXPORT_DIR/<播客名>/<EID>-<标题>.md`
+- Drive：若同名文件已存在则覆盖更新，不存在则创建
 
 ## 使用
 

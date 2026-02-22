@@ -4,6 +4,7 @@ import pendulum
 from retrying import retry
 import requests
 from podcast2notion.notion_helper import NotionHelper
+from podcast2notion.obsidian_sync import sync_episode_to_obsidian
 from podcast2notion import utils
 from dotenv import load_dotenv
 
@@ -15,7 +16,7 @@ from podcast2notion.config import (
     TAG_ICON_URL,
     TZ,
 )
-from utils import get_icon
+from podcast2notion.utils import get_icon
 
 
 headers = {
@@ -362,12 +363,14 @@ def insert_episode(episodes, d,dir_dict):
             "database_id": notion_helper.episode_database_id,
             "type": "database_id",
         }
+        synced_page_id = page_id
         if page_id:
             notion_helper.update_page(page_id=page_id, properties=properties)
         else:
-            notion_helper.create_page(
+            synced_page_id = notion_helper.create_page(
                 parent=parent, properties=properties, icon=get_icon(d.get(pid)[1])
-            )
+            ).get("id")
+        sync_episode_to_obsidian(episode=episode, podcast_name=dir_name, notion_page_id=synced_page_id)
 
 
 def get_progress(eids):

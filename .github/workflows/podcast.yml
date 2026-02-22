@@ -16,6 +16,14 @@ jobs:
         NOTION_PAGE: ${{ secrets.NOTION_PAGE }}
         REFRESH_TOKEN: ${{ secrets.REFRESH_TOKEN }}
         COOKIE: ${{ secrets.TONGYI_COOKIE }}
+        OBSIDIAN_SYNC_ENABLED: "true"
+        OBSIDIAN_EXPORT_DIR: /tmp/obsidian_export
+        GOOGLE_DRIVE_FOLDER_ID: ${{ secrets.GOOGLE_DRIVE_FOLDER_ID }}
+        GOOGLE_OAUTH_TOKEN_URL: ${{ secrets.GOOGLE_OAUTH_TOKEN_URL }}
+        GOOGLE_OAUTH_CLIENT_ID: ${{ secrets.GOOGLE_OAUTH_CLIENT_ID }}
+        GOOGLE_OAUTH_CLIENT_SECRET: ${{ secrets.GOOGLE_OAUTH_CLIENT_SECRET }}
+        GOOGLE_OAUTH_REFRESH_TOKEN: ${{ secrets.GOOGLE_OAUTH_REFRESH_TOKEN }}
+        GOOGLE_OAUTH_SCOPE: ${{ secrets.GOOGLE_OAUTH_SCOPE }}
         YEAR: ${{ vars.YEAR }}
         REF: ${{ github.ref }}
         REPOSITORY: ${{ github.repository }}
