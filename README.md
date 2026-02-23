@@ -7,6 +7,10 @@
 ```env
 OBSIDIAN_SYNC_ENABLED=true
 OBSIDIAN_EXPORT_DIR=/你的/Obsidian/Vault/Podcast
+# 可选：是否把 EID 放到文件名前缀（默认 false）
+OBSIDIAN_FILENAME_INCLUDE_EID=false
+# 可选：是否把通义文稿正文写入 Obsidian（默认 true）
+OBSIDIAN_INCLUDE_TONGYI_TRANSCRIPT=true
 ```
 
 如果你希望再自动上传到 Google Drive（例如 Obsidian Vault 在 Drive 中）：

@@ -287,6 +287,46 @@ def update_month_data():
         month = int(title[5 : title.index("月")])
         get_monthly_wrapped(year, month, id)
 
+def build_episode_basic_children(episode):
+    children = [utils.get_heading(2, "基本信息")]
+    status = episode.get("状态") or ""
+    pub = (
+        pendulum.from_timestamp(episode.get("发布时间"), tz="Asia/Shanghai").to_datetime_string()
+        if episode.get("发布时间")
+        else ""
+    )
+    played = (
+        pendulum.from_timestamp(episode.get("日期"), tz="Asia/Shanghai").to_datetime_string()
+        if episode.get("日期")
+        else ""
+    )
+    children.append(utils.get_bulleted_list_item(f"状态：{status}"))
+    children.append(utils.get_bulleted_list_item(f"发布时间：{pub}"))
+    if played:
+        children.append(utils.get_bulleted_list_item(f"收听时间：{played}"))
+    if episode.get("收听进度") is not None:
+        children.append(utils.get_bulleted_list_item(f"收听进度(秒)：{episode.get('收听进度')}"))
+    if episode.get("时长") is not None:
+        children.append(utils.get_bulleted_list_item(f"总时长(秒)：{episode.get('时长')}"))
+
+    children.append(utils.get_heading(2, "链接"))
+    if episode.get("链接"):
+        children.append(utils.get_paragraph(f"小宇宙：{episode.get('链接')}"))
+    if episode.get("音频"):
+        children.append(utils.get_paragraph(f"音频：{episode.get('音频')}"))
+    if episode.get("通义链接"):
+        children.append(utils.get_paragraph(f"通义转写：{episode.get('通义链接')}"))
+
+    children.append(utils.get_heading(2, "Description"))
+    desc = episode.get("Description") or ""
+    lines = [x.strip() for x in desc.splitlines() if x.strip()]
+    if not lines:
+        children.append(utils.get_paragraph("(empty)"))
+    else:
+        for line in lines:
+            children.append(utils.get_paragraph(line))
+    return children
+
 
 def insert_episode(episodes, d,dir_dict):
     episodes.sort(key=lambda x: x["pubDate"])
@@ -308,7 +348,7 @@ def insert_episode(episodes, d,dir_dict):
         episode["喜欢"] = result.get("isPicked")
         episode["收听进度"] = result.get("progress")
         episode["Podcast"] = [d.get(pid)[0]]
-        episode["链接"] = f"hhttps://www.xiaoyuzhoufm.com/episode/{result.get('eid')}"
+        episode["链接"] = f"https://www.xiaoyuzhoufm.com/episode/{result.get('eid')}"
         status = "未听"
         if result.get("isFinished"):
             episode["收听进度"] = result.get("duration")
@@ -379,6 +419,16 @@ def insert_episode(episodes, d,dir_dict):
             synced_page_id = notion_helper.create_page(
                 parent=parent, properties=properties, icon=get_icon(d.get(pid)[1])
             ).get("id")
+        # Fill newly created/empty pages with a basic readable body.
+        try:
+            children = notion_helper.get_block_children(synced_page_id)
+            if not children:
+                notion_helper.append_blocks(
+                    block_id=synced_page_id,
+                    children=build_episode_basic_children(episode),
+                )
+        except Exception as e:
+            print(f"写入Notion正文失败，跳过：{e}")
         sync_episode_to_obsidian(episode=episode, podcast_name=dir_name, notion_page_id=synced_page_id)
 
 

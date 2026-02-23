@@ -6,6 +6,7 @@ from typing import Optional
 
 import pendulum
 import requests
+from podcast2notion import utils
 
 
 def sync_episode_to_obsidian(episode: dict, podcast_name: str, notion_page_id: Optional[str] = None):
@@ -24,7 +25,11 @@ def sync_episode_to_obsidian(episode: dict, podcast_name: str, notion_page_id: O
 
     eid = str(episode.get("Eid") or "unknown")
     title = str(episode.get("标题") or "Untitled")
-    file_name = f"{_safe_filename(eid)}-{_safe_filename(title)[:80]}.md"
+    include_eid = os.getenv("OBSIDIAN_FILENAME_INCLUDE_EID", "").strip().lower() in {"1", "true", "yes", "on"}
+    if include_eid:
+        file_name = f"{_safe_filename(eid)}-{_safe_filename(title)[:80]}.md"
+    else:
+        file_name = f"{_safe_filename(title)[:120]}.md"
     file_path = podcast_dir / file_name
 
     content = _build_episode_markdown(episode=episode, podcast_name=podcast_name, notion_page_id=notion_page_id)
@@ -81,6 +86,12 @@ def _build_episode_markdown(episode: dict, podcast_name: str, notion_page_id: Op
         desc or "(empty)",
         "",
     ]
+    transcript_lines = _fetch_tongyi_transcript_lines(tongyi_url)
+    if transcript_lines:
+        lines.extend(["## Transcript", ""])
+        lines.extend(transcript_lines)
+        lines.append("")
+
     if audio:
         lines.append(f"[Audio Link]({audio})")
     if xiaoyuzhou_url:
@@ -167,6 +178,73 @@ def _timestamp_to_local_time(ts) -> str:
 
 def _is_enabled() -> bool:
     return os.getenv("OBSIDIAN_SYNC_ENABLED", "").strip().lower() in {"1", "true", "yes", "on"}
+
+
+def _fetch_tongyi_transcript_lines(tongyi_url: str):
+    if not tongyi_url:
+        return []
+    if os.getenv("OBSIDIAN_INCLUDE_TONGYI_TRANSCRIPT", "true").strip().lower() not in {"1", "true", "yes", "on"}:
+        return []
+    trans_id = _extract_tongyi_trans_id(tongyi_url)
+    if not trans_id:
+        return []
+
+    cookie = os.getenv("COOKIE", "").strip()
+    if not cookie:
+        return []
+
+    headers = {
+        "accept": "application/json, text/plain, */*",
+        "content-type": "application/json",
+        "origin": "https://tongyi.aliyun.com",
+        "referer": tongyi_url,
+        "user-agent": "Mozilla/5.0",
+        "cookie": cookie,
+        "x-tw-from": "tongyi",
+    }
+    payload = {"action": "getTransDocEdit", "version": "1.0", "transId": trans_id}
+    url = "https://tw-efficiency.biz.aliyun.com/api/doc/getTransDocEdit?c=tongyi-web"
+    try:
+        resp = requests.post(url, headers=headers, json=payload, timeout=20)
+        if not resp.ok:
+            return []
+        content = resp.json().get("data", {}).get("content")
+        if not content:
+            return []
+        data = json.loads(content)
+        return _parse_tongyi_note_lines(data)
+    except Exception:
+        return []
+
+
+def _extract_tongyi_trans_id(url: str) -> str:
+    m = re.search(r"/transcripts/([A-Za-z0-9_-]+)", url)
+    return m.group(1) if m else ""
+
+
+def _parse_tongyi_note_lines(data):
+    lines = []
+    for paragraph in data:
+        line_parts = []
+        if isinstance(paragraph, list):
+            for span in paragraph:
+                if isinstance(span, list):
+                    tag = span[0] if span else ""
+                    if tag == "span":
+                        for i in range(2, len(span)):
+                            item = span[i]
+                            if isinstance(item, list) and len(item) >= 3 and isinstance(item[2], str):
+                                text = item[2].strip()
+                                if text:
+                                    line_parts.append(text)
+                    elif tag == "tag" and len(span) > 1 and isinstance(span[1], dict):
+                        ms = span[1].get("metadata", {}).get("time")
+                        if isinstance(ms, (int, float)):
+                            line_parts.append(f"[{utils.format_milliseconds(ms)}]")
+        line = "".join(line_parts).strip()
+        if line:
+            lines.append(line)
+    return lines
 
 
 def _get_valid_drive_access_token() -> Optional[str]:
